@@ -1,58 +1,61 @@
-![battlesnake](./screenshots/battlesnake_1.jpg)
+
 # BattleSnake 2017
 
-In 2017, I competed in Victoria's annual <a href="https://github.com/sendwithus/battlesnake">BattleSnake</a> competition in which competitors play the classic arcade game of snake: you have a snake and if you eat food then it becomes get longer. The caveat of BattleSnake is there are other snakes on the board at the same time and your health decreases over time -- so you need to eat!
+![battlesnake](./screenshots/battlesnake_1.jpg)
 
-**How it works:** Players are given the state of the grid (where the snakes are, where the food is) each turn and are asked to simply respond with the direction they'd like their snake to move. 
+   In 2017, I competed in Victoria's annual <a href="https://github.com/sendwithus/battlesnake">BattleSnake</a> competition in which competitors play the classic arcade game of snake: you have a snake and if you eat food then it becomes get longer. The caveat of BattleSnake is there are other snakes on the board at the same time and your health decreases over time -- so you need to eat!
+
+**How it works:** 
+    Players are given the state of the grid (where the snakes are, where the food is) each turn and are asked to simply respond with the direction they'd like their snake to move. 
 
 ## Constraints: 
 
-* The response time has to be in 200 ms.
+  * The response time has to be in 200 ms.
 
 
 ## My approach  
 
 There are four main parts to my approach:
 
-1.  **Grid**: Make a grid layout of the current state of the game that I can interpret. 
+  1.  **Grid**: Make a grid layout of the current state of the game that I can interpret. 
 
-2. **Paint** the grid: With the grid layout defined (#1), assign weighted values on the grid based on importance of different objects: food, enemy snakes, my snake, and walls.
+  2. **Paint** the grid: With the grid layout defined (#1), assign weighted values on the grid based on importance of different objects: food, enemy snakes, my snake, and walls.
 
-3. Build a **Tree**: Starting with the head of my snake as the top node, construct a tree that documents the possible paths the snake can more.
+  3. Build a **Tree**: Starting with the head of my snake as the top node, construct a tree that documents the possible paths the snake can more.
 
-4. Hire a **Squirrel**: Traverse the tree you've built and determine the best path to take. 
+  4. Hire a **Squirrel**: Traverse the tree you've built and determine the best path to take. 
 
 
 ### Conclusions:
 
-My initial thinking was that the strength of the method would be directly proportional to the depth of the tree (#3). However, because there was an inforced response time of 200 ms, it simply was too costly to increase the depth (each level would mean 3^n more possible nodes, i.e: 1,3,9,27,81,243,729, 2187). Adding another level to the tree became too unweildly and it wasn't realistic given the constraints. The reality was, **the "painting of the grid" (#2) was by far the most important part.** If done correctly, I could ensure that my tree, no matter how many levels it had, would be influenced by all objects on the grid. 
+   My initial thinking was that the strength of the method would be directly proportional to the depth of the tree (#3). However, because there was an inforced response time of 200 ms, it simply was too costly to increase the depth (each level would mean 3^n more possible nodes, i.e: 1,3,9,27,81,243,729, 2187). Adding another level to the tree became too unweildly and it wasn't realistic given the constraints. The reality was, **the "painting of the grid" (#2) was by far the most important part.** If done correctly, I could ensure that my tree, no matter how many levels it had, would be influenced by all objects on the grid. 
 
 I ended up winning my qualifier and moving to the semifinals automatically, but I came second in the semi's and didn't move onto the finals (so close!). 
 
 ##### Video (click to open on YouTube)
-[![Click for video](./screenshots/video_thumbnail.png)](https://www.youtube.com/watch?v=_snSnHx6Irg)
+  [![Click for video](./screenshots/video_thumbnail.png)](https://www.youtube.com/watch?v=_snSnHx6Irg)
 
 ### Surprises: 
 
-With the way I built my snake, using varying degree and weighting config variables (`config.rb`), it meant that I could easily make my snake more aggressive by making enemy snakes "more attractive". Having these config variables meant my algorithm was easily tunable for a specific scenario, which came in handy for some of the special bounty rounds during the day. 
+  With the way I built my snake, using varying degree and weighting config variables (`config.rb`), it meant that I could easily make my snake more aggressive by making enemy snakes "more attractive". Having these config variables meant my algorithm was easily tunable for a specific scenario, which came in handy for some of the special bounty rounds during the day. 
 
 ## How each layer worked
 
 ### 1. The Grid (`grid.rb`)
 
-This part is pretty straight forward. I'd receive data on the width and height of the grid, the coordinates of all the snakes, and the location of any food. With that information I made a basic grid that ended up being an array of arrays, i.e. Array[width][height]
+  This part is pretty straight forward. I'd receive data on the width and height of the grid, the coordinates of all the snakes, and the location of any food. With that information I made a basic grid that ended up being an array of arrays, i.e. Array[width][height]
 
-Here's a visual way of understanding it:
+  Here's a visual way of understanding it:
 
-![grid](./screenshots/grid.png)
+   ![grid](./screenshots/grid.png)
 
 
 ### 2. Painting the Grid (`painter.rb`)
 
-This part was surprisingly the most important. Each item on the grid was given a certain importance (config variables that I defined) and I "painted" the grid to reflect that. It's easier to see it visually first, I think:
+  This part was surprisingly the most important. Each item on the grid was given a certain importance (config variables that I defined) and I "painted" the grid to reflect that. It's easier to see it visually first, I think:
 
 ##### Walls
-![grid](./screenshots/walls.png)
+  ![grid](./screenshots/walls.png)
 
 ##### Snakes
 ![snakes](./screenshots/snakes.png)
@@ -70,25 +73,26 @@ This part was surprisingly the most important. Each item on the grid was given a
 ##### Combined with realistic float values
 ![combined_r_d](./screenshots/combined_real_decimal.png)
 
-Each object has a radius of effect. What I realized is that all I need to do is make sure that radius extends to somewhere near the vacinity of my snake. That way, when I build a tree then all the objects would have an influence - my snake would feel the gravity of all the snakes/foods/walls on the field. 
+  Each object has a radius of effect. What I realized is that all I need to do is make sure that radius extends to somewhere near the vacinity of my snake. That way, when I build a tree then all the objects would have an influence - my snake would feel the gravity of all the snakes/foods/walls on the field. 
 
 ### Painting the Walls
 
-My thinking: Walls are dangerous. If you run into one then you die. It's better to stay farther away from them if you can. 
+  My thinking: Walls are dangerous. If you run into one then you die. It's better to stay farther away from them if you can. 
 
 ### Painting the Snakes
 
-My thinking: There are two scenarios to consider: enemy snakes and my snake
+  My thinking: There are two scenarios to consider: enemy snakes and my snake
 
 * Enemy snakes are dangerous. Their heads are the most dangerous.
 
 * My snake's body is more dangerous than open space. The area surrounding my snake's head is neutral.
 
-**Important detail**: If one snake runs into another snake, then the larger of the two wins. If they're the same size then they both die. To account for that, based on a ratio of how much bigger or smaller an enemy snake was to mine, I painted around enemy snakes dynamically based on threat level. Specifically, if the snake and my snake are the same size the ratio was 1:1, if the enemy was bigger then the danger lavel would be between 1-2 times more than normal, if they were smaller then down to 0.8 of the normal danger level.  It wasn't a ton of influence, but it still counts. 
+**Important detail**: 
+    If one snake runs into another snake, then the larger of the two wins. If they're the same size then they both die. To account for that, based on a ratio of how much bigger or smaller an enemy snake was to mine, I painted around enemy snakes dynamically based on threat level. Specifically, if the snake and my snake are the same size the ratio was 1:1, if the enemy was bigger then the danger lavel would be between 1-2 times more than normal, if they were smaller then down to 0.8 of the normal danger level.  It wasn't a ton of influence, but it still counts. 
 
 ### Painting the Food
 
-The importance of food was weighted inverse proportionately to how much life my snake had. That is to say, the lower my health, the more influence food had and the more likely I was to pursue it. I wrote an equation that exponentially increased as my percentage of health went from 100% to 0. 
+  The importance of food was weighted inverse proportionately to how much life my snake had. That is to say, the lower my health, the more influence food had and the more likely I was to pursue it. I wrote an equation that exponentially increased as my percentage of health went from 100% to 0. 
 
 ![graph](./screenshots/graph.png)
 (the equation I used)
